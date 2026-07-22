@@ -166,7 +166,6 @@ The exploration queries check for:
 * missing order fields
 * zero or negative order amounts
 * unknown customer references
-* duplicate order identifiers
 
 ## Part 2: ETL Pipeline
 
@@ -278,12 +277,6 @@ Run all tests from the project root:
 
 ```bash
 python -m pytest -v
-```
-
-To run only the transformation tests:
-
-```bash
-python -m pytest tests/test_transform.py -v
 ```
 
 Current test result:
