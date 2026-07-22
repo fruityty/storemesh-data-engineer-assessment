@@ -4,44 +4,55 @@ from prefect import flow, get_run_logger
 
 from etl.config import SOURCE_DATABASE_PATH
 from etl.extract import extract_source_data
+from etl.transform import transform_customers
 
 
-@flow(name="shopdata-extract-flow")
-def extract_flow(
+@flow(name="shopdata-etl-flow")
+def shopdata_etl_flow(
     database_path: str = str(SOURCE_DATABASE_PATH),
 ) -> None:
     """
-    Orchestrate the extraction stage of the ShopData ETL pipeline.
+    Run the current ShopData ETL stages.
+
+    Current stages:
+    1. Extract all source views.
+    2. Clean customer data.
     """
     logger = get_run_logger()
 
-    logger.info("Starting source-data extraction")
+    logger.info("Starting ShopData ETL pipeline")
 
-    # Prefect records this function call as a separate task run.
     customers, orders, exchange_rates = extract_source_data(
         Path(database_path)
     )
 
-    # Temporary schema checks confirm that extraction returned the
-    # expected columns before transformation logic is added.
+    cleaned_customers = transform_customers(customers)
+
+
+    # Temporary validation logs until the Load stage is implemented.
     logger.info(
-        "Customer columns: %s",
-        customers.columns.tolist(),
+        "Cleaned customer columns: %s",
+        cleaned_customers.columns.tolist(),
     )
 
     logger.info(
-        "Order columns: %s",
-        orders.columns.tolist(),
+        "Cleaned customer IDs: %s",
+        cleaned_customers["customer_id"].tolist(),
+    )
+
+    # These extracted datasets will be used in the next order-transform step.
+    logger.info(
+        "Orders ready for transformation: %d",
+        len(orders),
     )
 
     logger.info(
-        "Exchange-rate columns: %s",
-        exchange_rates.columns.tolist(),
+        "Exchange rates ready for transformation: %d",
+        len(exchange_rates),
     )
 
-    logger.info("Source-data extraction completed successfully")
+    logger.info("Current ETL stages completed successfully")
 
 
 if __name__ == "__main__":
-    # Run the flow only when this file is executed directly.
-    extract_flow()
+    shopdata_etl_flow()
