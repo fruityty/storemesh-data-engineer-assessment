@@ -2,27 +2,31 @@ from pathlib import Path
 
 from prefect import flow, get_run_logger
 
-from etl.config import SOURCE_DATABASE_PATH
+from etl.config import ANALYTICS_DATABASE_PATH, SOURCE_DATABASE_PATH
 from etl.extract import extract_source_data
+from etl.load import load_analytics_data
 from etl.transform import transform_customers, transform_orders
+
 
 @flow(name="shopdata-etl-flow")
 def shopdata_etl_flow(
-    database_path: str = str(SOURCE_DATABASE_PATH),
+    source_database: str = str(SOURCE_DATABASE_PATH),
+    analytics_database: str = str(ANALYTICS_DATABASE_PATH),
 ) -> None:
     """
-    Run the current ShopData ETL stages.
+    Run the complete ShopData ETL pipeline.
 
-    Current stages:
-    1. Extract all source views.
-    2. Clean customer data.
+    Stages:
+    1. Extract source data.
+    2. Clean customer and order data.
+    3. Load cleaned data into analytics.db.
     """
     logger = get_run_logger()
 
     logger.info("Starting ShopData ETL pipeline")
 
     customers, orders, exchange_rates = extract_source_data(
-        Path(database_path)
+        Path(source_database)
     )
 
     cleaned_customers = transform_customers(customers)
@@ -32,23 +36,13 @@ def shopdata_etl_flow(
         exchange_rates,
     )
 
-    # Temporary validation logs until the Load stage is implemented.
-    logger.info(
-        "Cleaned customer rows: %d",
-        len(cleaned_customers),
+    load_analytics_data(
+        cleaned_customers,
+        cleaned_orders,
+        Path(analytics_database),
     )
 
-    logger.info(
-        "Cleaned order rows: %d",
-        len(cleaned_orders),
-    )
-
-    logger.info(
-        "Cleaned order columns: %s",
-        cleaned_orders.columns.tolist(),
-    )
-
-    logger.info("Current ETL stages completed successfully")
+    logger.info("ShopData ETL pipeline completed successfully")
 
 
 if __name__ == "__main__":
