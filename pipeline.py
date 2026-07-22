@@ -4,8 +4,7 @@ from prefect import flow, get_run_logger
 
 from etl.config import SOURCE_DATABASE_PATH
 from etl.extract import extract_source_data
-from etl.transform import transform_customers
-
+from etl.transform import transform_customers, transform_orders
 
 @flow(name="shopdata-etl-flow")
 def shopdata_etl_flow(
@@ -28,27 +27,25 @@ def shopdata_etl_flow(
 
     cleaned_customers = transform_customers(customers)
 
+    cleaned_orders = transform_orders(
+        orders,
+        exchange_rates,
+    )
 
     # Temporary validation logs until the Load stage is implemented.
     logger.info(
-        "Cleaned customer columns: %s",
-        cleaned_customers.columns.tolist(),
+        "Cleaned customer rows: %d",
+        len(cleaned_customers),
     )
 
     logger.info(
-        "Cleaned customer IDs: %s",
-        cleaned_customers["customer_id"].tolist(),
-    )
-
-    # These extracted datasets will be used in the next order-transform step.
-    logger.info(
-        "Orders ready for transformation: %d",
-        len(orders),
+        "Cleaned order rows: %d",
+        len(cleaned_orders),
     )
 
     logger.info(
-        "Exchange rates ready for transformation: %d",
-        len(exchange_rates),
+        "Cleaned order columns: %s",
+        cleaned_orders.columns.tolist(),
     )
 
     logger.info("Current ETL stages completed successfully")
