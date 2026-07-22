@@ -217,7 +217,7 @@ From the project root, run:
 python pipeline.py
 ```
 
-Prefect starts a temporary local server for the flow run.
+Runs the flow locally with Prefect.
 
 A successful run creates:
 
